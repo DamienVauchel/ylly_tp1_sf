@@ -5,6 +5,8 @@ services:
         autowire: true
         autoconfigure: true
         public: false
+        bind:
+            $googleTranslateKey: "%google_translate_key%"
 
     AppBundle\:
         resource: '../../src/AppBundle/*'

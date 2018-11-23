@@ -3,6 +3,7 @@
 namespace AppBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Google\Cloud\Translate\TranslateClient;
 use ReflectionClass;
 
 class NinjaTranslator
@@ -12,9 +13,15 @@ class NinjaTranslator
      */
     private $em;
 
-    public function __construct(EntityManagerInterface $em)
+    /**
+     * @var TranslateClient
+     */
+    private $translator;
+
+    public function __construct(EntityManagerInterface $em, string $googleTranslateKey)
     {
         $this->em = $em;
+        $this->translator = new TranslateClient(['key' => $googleTranslateKey]);
     }
 
     public function translate(string $fromLangCode, string $toLangCode)
@@ -56,13 +63,20 @@ class NinjaTranslator
                 }
             }
 
-            foreach ($getters as $getter) {
-                $this->translateString($getter);
-            }
-        }
-    }
+            $setters = [];
 
-    private function translateString(string $string)
-    {
+            foreach ($getters as $key => $getter) {
+                $key = str_replace('get', 'set', $key);
+                $setters[$key] = $this->translator->translate($getter, ['target' => $toLangCode]);
+            }
+
+            foreach ($setters as $key => $setter) {
+                $object->translate($toLangCode)->{$key}($setter);
+            }
+
+            $this->em->persist($object);
+            $object->mergeNewTranslations();
+            $this->em->flush();
+        }
     }
 }
