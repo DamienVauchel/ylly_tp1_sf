@@ -6,6 +6,7 @@ use AppBundle\Service\NinjaTranslator;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class NinjaTranslatorCommand extends Command
@@ -26,27 +27,31 @@ class NinjaTranslatorCommand extends Command
     {
         $output
             ->writeln([
-                "Welcome to the Ylly's NINJA TRANSLATOR",
+                'Welcome to the Ylly\'s NINJA TRANSLATOR',
                 '=====================================================',
                 'This command can translate your throat and cut your string (or the opposite)',
                 '-----------------------------------------------------',
             ]);
 
-        $input->getArgument('fromLangCode') ? $fromLangCode = $input->getArgument('fromLangCode') : $fromLangCode = 'en';
-        $toLangCode = $input->getArgument('toLangCode');
+        $fromLangCode = $input->getOption('from');
+        $toLangCodes = $input->getArgument('to');
 
-        if ($fromLangCode === $toLangCode) {
-            $output
-                ->writeln([
-                    'Nothing to translate, language from and language to are the same',
-                    '=======================================================',
-                    'Bye... NINJA!',
-                ]);
+        foreach ($toLangCodes as $toLangCode) {
+            if ($fromLangCode === $toLangCode) {
+                $output
+                    ->writeln([
+                        'Nothing to translate, language from and language to are the same ('.$fromLangCode.')',
+                        '=======================================================',
+                        'Bye... NINJA!',
+                    ]);
 
-            return;
+                if (1 === \count($toLangCodes)) {
+                    return;
+                }
+            }
+
+            $this->ninjaTranslator->translate($fromLangCode, $toLangCode);
         }
-
-        $this->ninjaTranslator->translate($fromLangCode, $toLangCode);
         $output
             ->writeln([
                 'Your strings have been translated by a ninja',
@@ -61,8 +66,8 @@ class NinjaTranslatorCommand extends Command
             ->setName('app:ninja-translator')
             ->setDescription('Translate all the website string data to the language in command argument')
             ->setHelp('This command translate your throat and cut your string (or the opposite)')
-            ->addArgument('toLangCode', InputArgument::REQUIRED, 'The language langCode to translate to')
-            ->addArgument('fromLangCode', InputArgument::OPTIONAL, 'The language langCode to be translated from')
+            ->addArgument('to', InputArgument::IS_ARRAY | InputArgument::REQUIRED, 'The language langCode to translate to')
+            ->addOption('from', null, InputOption::VALUE_OPTIONAL, 'The language langCode to be translated from', 'en')
         ;
     }
 }
