@@ -29,12 +29,30 @@ class NinjaTranslatorCommand extends Command
                 "Welcome to the Ylly's NINJA TRANSLATOR",
                 '=====================================================',
                 'This command can translate your throat and cut your string (or the opposite)',
+                '-----------------------------------------------------',
             ]);
 
         $input->getArgument('fromLangCode') ? $fromLangCode = $input->getArgument('fromLangCode') : $fromLangCode = 'en';
         $toLangCode = $input->getArgument('toLangCode');
 
+        if ($fromLangCode === $toLangCode) {
+            $output
+                ->writeln([
+                    'Nothing to translate, language from and language to are the same',
+                    '=======================================================',
+                    'Bye... NINJA!',
+                ]);
+
+            return;
+        }
+
         $this->ninjaTranslator->translate($fromLangCode, $toLangCode);
+        $output
+            ->writeln([
+                'Your strings have been translated by a ninja',
+                '=======================================================',
+                'Bye... NINJA!',
+            ]);
     }
 
     protected function configure()
