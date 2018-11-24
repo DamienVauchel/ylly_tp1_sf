@@ -2,6 +2,7 @@
 
 namespace AppBundle\Entity;
 
+use AppBundle\Entity\Traits\TranslationUpdatable;
 use Doctrine\ORM\Mapping as ORM;
 use Knp\DoctrineBehaviors\Model as ORMBehaviors;
 
@@ -11,7 +12,7 @@ use Knp\DoctrineBehaviors\Model as ORMBehaviors;
  */
 class ArticleTranslation
 {
-    use ORMBehaviors\Translatable\Translation;
+    use ORMBehaviors\Translatable\Translation, TranslationUpdatable;
 
     /**
      * @var string

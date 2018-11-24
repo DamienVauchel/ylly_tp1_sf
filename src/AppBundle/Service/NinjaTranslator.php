@@ -53,30 +53,32 @@ class NinjaTranslator
         $objects = $this->em->getRepository($entity)->findAll();
 
         foreach ($objects as $object) {
-            $getters = [];
+            if (true === $object->translate($fromLangCode)->getUpdated()) {
+                $getters = [];
 
-            foreach ($reflection->getMethods() as $method) {
-                $methodName = $method->name;
+                foreach ($reflection->getMethods() as $method) {
+                    $methodName = $method->name;
 
-                if ('get' === substr($methodName, 0, 3) && \is_string($object->translate($fromLangCode)->{$methodName}()) && 'getLocale' !== $methodName && 'getTranslatableEntityClass' !== $methodName) {
-                    $getters[$method->name] = $object->translate($fromLangCode)->{$methodName}();
+                    if ('get' === substr($methodName, 0, 3) && \is_string($object->translate($fromLangCode)->{$methodName}()) && 'getLocale' !== $methodName && 'getTranslatableEntityClass' !== $methodName) {
+                        $getters[$method->name] = $object->translate($fromLangCode)->{$methodName}();
+                    }
                 }
+
+                $setters = [];
+
+                foreach ($getters as $key => $getter) {
+                    $key = str_replace('get', 'set', $key);
+                    $setters[$key] = $this->translator->translate($getter, ['target' => $toLangCode]);
+                }
+
+                foreach ($setters as $key => $setter) {
+                    $object->translate($toLangCode)->{$key}($setter);
+                }
+
+                $this->em->persist($object);
+                $object->mergeNewTranslations();
+                $this->em->flush();
             }
-
-            $setters = [];
-
-            foreach ($getters as $key => $getter) {
-                $key = str_replace('get', 'set', $key);
-                $setters[$key] = $this->translator->translate($getter, ['target' => $toLangCode]);
-            }
-
-            foreach ($setters as $key => $setter) {
-                $object->translate($toLangCode)->{$key}($setter);
-            }
-
-            $this->em->persist($object);
-            $object->mergeNewTranslations();
-            $this->em->flush();
         }
     }
 }
