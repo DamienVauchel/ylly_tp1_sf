@@ -52,6 +52,7 @@ class NinjaTranslatorCommand extends Command
 
             $this->ninjaTranslator->translate($fromLangCode, $toLangCode);
         }
+
         $output
             ->writeln([
                 'Your strings have been translated by a ninja',

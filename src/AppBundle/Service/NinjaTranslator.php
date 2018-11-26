@@ -67,7 +67,11 @@ class NinjaTranslator
                 $setters = [];
 
                 foreach ($getters as $key => $getter) {
-                    $key = str_replace('get', 'set', $key);
+                    $key = substr_replace($key, 'set', 0, 3);
+
+                    // Nb charac getter < 2000 par call API
+                    // 1 000 000 charac toutes les 100 secondes
+
                     $setters[$key] = $this->translator->translate($getter, ['target' => $toLangCode]);
                 }
 
