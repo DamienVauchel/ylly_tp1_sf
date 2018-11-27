@@ -20,3 +20,5 @@ parameters:
     secret: ThisTokenIsNotSoSecretChangeIt
 
     google_translate_key: ~
+    google_translate_api_length_by_call_limit: ~
+    google_translate_api_length_for_100_seconds_limit: ~

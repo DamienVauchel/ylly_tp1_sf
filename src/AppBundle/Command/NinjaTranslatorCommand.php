@@ -37,25 +37,13 @@ class NinjaTranslatorCommand extends Command
         $toLangCodes = $input->getArgument('to');
 
         foreach ($toLangCodes as $toLangCode) {
-            if ($fromLangCode === $toLangCode) {
-                $output
-                    ->writeln([
-                        'Nothing to translate, language from and language to are the same ('.$fromLangCode.')',
-                        '=======================================================',
-                        'Bye... NINJA!',
-                    ]);
-
-                if (1 === \count($toLangCodes)) {
-                    return;
-                }
-            }
-
-            $this->ninjaTranslator->translate($fromLangCode, $toLangCode);
+            $this->checkForLAngCode($fromLangCode, $toLangCode, $toLangCodes, $output);
+            $this->ninjaTranslator->translate($fromLangCode, $toLangCode, $output);
         }
 
         $output
             ->writeln([
-                'Your strings have been translated by a ninja',
+                'Your strings have been translated by a ninja.',
                 '=======================================================',
                 'Bye... NINJA!',
             ]);
@@ -70,5 +58,21 @@ class NinjaTranslatorCommand extends Command
             ->addArgument('to', InputArgument::IS_ARRAY | InputArgument::REQUIRED, 'The language langCode to translate to')
             ->addOption('from', null, InputOption::VALUE_OPTIONAL, 'The language langCode to be translated from', 'en')
         ;
+    }
+
+    private function checkForLAngCode(string $from, string $to, array $toCodes, OutputInterface $output)
+    {
+        if ($from === $to) {
+            $output
+                ->writeln([
+                    'Nothing to translate, language from and language to are the same ('.$from.')',
+                    '=======================================================',
+                    'Bye... NINJA!',
+                ]);
+
+            if (1 === \count($toCodes)) {
+                return;
+            }
+        }
     }
 }

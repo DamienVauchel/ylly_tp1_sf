@@ -6,7 +6,7 @@ services:
         autoconfigure: true
         public: false
         bind:
-            $googleTranslateKey: "%google_translate_key%"
+            $translator: "@app.google_translator"
 
     AppBundle\:
         resource: '../../src/AppBundle/*'
@@ -16,3 +16,11 @@ services:
         resource: '../../src/AppBundle/Controller'
         public: true
         tags: ['controller.service_arguments']
+
+    app.google_translator:
+        class: AppBundle\Service\Bridges\GoogleTranslatorBridge
+        arguments:
+            - "@doctrine.orm.entity_manager"
+            - "%google_translate_key%"
+            - "%google_translate_api_length_by_call_limit%"
+            - "%google_translate_api_length_for_100_seconds_limit%"
