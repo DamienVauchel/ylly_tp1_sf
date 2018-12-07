@@ -3,10 +3,12 @@
 namespace AppBundle\Command;
 
 use AppBundle\Service\NinjaTranslator;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class NinjaTranslatorCommand extends Command
@@ -19,12 +21,13 @@ class NinjaTranslatorCommand extends Command
     public function __construct(NinjaTranslator $ninjaTranslator)
     {
         $this->ninjaTranslator = $ninjaTranslator;
-
         parent::__construct();
     }
 
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        $logger = new ConsoleLogger($output, [LogLevel::INFO => OutputInterface::VERBOSITY_NORMAL]);
+
         $output
             ->writeln([
                 'Welcome to the Ylly\'s NINJA TRANSLATOR',
@@ -35,10 +38,12 @@ class NinjaTranslatorCommand extends Command
 
         $fromLangCode = $input->getOption('from');
         $toLangCodes = $input->getArgument('to');
+        $entities = $input->getOption('entity');
 
         foreach ($toLangCodes as $toLangCode) {
-            $this->checkForLAngCode($fromLangCode, $toLangCode, $toLangCodes, $output);
-            $this->ninjaTranslator->translate($fromLangCode, $toLangCode, $output);
+            if ($this->checkForLAngCode($fromLangCode, $toLangCode, $output)) {
+                $this->ninjaTranslator->translate($entities, $fromLangCode, $toLangCode, $logger);
+            }
         }
 
         $output
@@ -57,22 +62,19 @@ class NinjaTranslatorCommand extends Command
             ->setHelp('This command translate your throat and cut your string (or the opposite)')
             ->addArgument('to', InputArgument::IS_ARRAY | InputArgument::REQUIRED, 'The language langCode to translate to')
             ->addOption('from', null, InputOption::VALUE_OPTIONAL, 'The language langCode to be translated from', 'en')
+            ->addOption('entity', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'The entitiy(ies) to translate', ['all'])
         ;
     }
 
-    private function checkForLAngCode(string $from, string $to, array $toCodes, OutputInterface $output)
+    private function checkForLAngCode(string $from, string $to, OutputInterface $output): bool
     {
         if ($from === $to) {
             $output
-                ->writeln([
-                    'Nothing to translate, language from and language to are the same ('.$from.')',
-                    '=======================================================',
-                    'Bye... NINJA!',
-                ]);
+                ->writeln(['Nothing to translate, language from and language to are the same ('.$from.')']);
 
-            if (1 === \count($toCodes)) {
-                return;
-            }
+            return false;
         }
+
+        return true;
     }
 }

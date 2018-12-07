@@ -15,18 +15,20 @@ use AppBundle\Entity\PageBis;
 use AppBundle\Entity\PageTer;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class DefaultController extends Controller
 {
     /**
      * @Route("/{_locale}", name="homepage", defaults={"_locale"="en"}, requirements={
-     *     "_locale"="en|fr|it|es|de"
+     *     "_locale"="en|fr|it|es|de|pl|pt"
      * })
      *
-     * @param mixed $_locale
+     * @param Request $request
+     * @param mixed   $_locale
      *
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     public function indexAction(Request $request, $_locale)
     {

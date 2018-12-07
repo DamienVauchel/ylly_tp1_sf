@@ -19,6 +19,6 @@ parameters:
     # A secret key that's used to generate certain security-related tokens
     secret: ThisTokenIsNotSoSecretChangeIt
 
-    google_translate_key: ~
-    google_translate_api_length_by_call_limit: ~
-    google_translate_api_length_for_100_seconds_limit: ~
+    google_translate:
+        key: ~
+        characs_nb_by_call_limit: ~

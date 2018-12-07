@@ -11,7 +11,7 @@ trait TranslationUpdatable
      */
     protected $updated;
 
-    public function getUpdated()
+    public function getUpdated(): bool
     {
         return $this->updated;
     }

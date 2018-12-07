@@ -32,6 +32,10 @@ class AppFixtures extends Fixture
             $article->setAuthor($faker->name);
             $article->translate('en')->setTitle($faker->realText(50));
             $article->translate('en')->setContent($faker->text(300));
+            $article->translate('en')->setUpdated(false);
+            if (0 === $i) {
+                $article->translate('en')->setUpdated(true);
+            }
             $manager->persist($article);
             $article->mergeNewTranslations();
         }
@@ -44,6 +48,7 @@ class AppFixtures extends Fixture
             $article->translate('en')->setTitle3($faker->realText(40));
             $article->translate('en')->setTitle4($faker->realText(50));
             $article->translate('en')->setContent($faker->text(200));
+            $article->translate('en')->setUpdated(true);
             $manager->persist($article);
             $article->mergeNewTranslations();
         }
@@ -56,6 +61,7 @@ class AppFixtures extends Fixture
             $article->translate('en')->setHeader($faker->text(100));
             $article->translate('en')->setFooter($faker->text(50));
             $article->translate('en')->setContent($faker->text(200));
+            $article->translate('en')->setUpdated(true);
             $manager->persist($article);
             $article->mergeNewTranslations();
         }
@@ -64,6 +70,7 @@ class AppFixtures extends Fixture
             $block = new Block();
             $block->translate('en')->setTitle($faker->realText(20));
             $block->translate('en')->setContent($faker->text(200));
+            $block->translate('en')->setUpdated(true);
             $manager->persist($block);
             $block->mergeNewTranslations();
         }
@@ -73,6 +80,7 @@ class AppFixtures extends Fixture
             $block->translate('en')->setTitle($faker->realText(25));
             $block->translate('en')->setCustom($faker->realText(50));
             $block->translate('en')->setContent($faker->text(200));
+            $block->translate('en')->setUpdated(true);
             $manager->persist($block);
             $block->mergeNewTranslations();
         }
@@ -84,6 +92,7 @@ class AppFixtures extends Fixture
             $block->translate('en')->setContent2($faker->text(200));
             $block->translate('en')->setContent3($faker->text(2500));
             $block->translate('en')->setContent4($faker->text(300));
+            $block->translate('en')->setUpdated(true);
             $manager->persist($block);
             $block->mergeNewTranslations();
         }
@@ -94,6 +103,7 @@ class AppFixtures extends Fixture
             $dog->translate('en')->setRace($faker->word);
             $dog->translate('en')->setColor($faker->safeColorName);
             $dog->translate('en')->setDescription($faker->realText(200));
+            $dog->translate('en')->setUpdated(true);
             $manager->persist($dog);
             $dog->mergeNewTranslations();
         }
@@ -103,6 +113,7 @@ class AppFixtures extends Fixture
             $kitten->setName($faker->name);
             $kitten->translate('en')->setRace($faker->word);
             $kitten->translate('en')->setDescription($faker->realText(200));
+            $kitten->translate('en')->setUpdated(true);
             $manager->persist($kitten);
             $kitten->mergeNewTranslations();
         }
@@ -112,6 +123,7 @@ class AppFixtures extends Fixture
             $page->translate('en')->setTitle($faker->sentence(4));
             $page->translate('en')->setSubtitle($faker->sentence(5));
             $page->translate('en')->setContent($faker->realText(200));
+            $page->translate('en')->setUpdated(true);
             $manager->persist($page);
             $page->mergeNewTranslations();
         }
@@ -121,6 +133,7 @@ class AppFixtures extends Fixture
             $page->translate('en')->setTitle($faker->sentence(4));
             $page->translate('en')->setSubtitle($faker->sentence(5));
             $page->translate('en')->setContent($faker->realText(200));
+            $page->translate('en')->setUpdated(true);
             $manager->persist($page);
             $page->mergeNewTranslations();
         }
@@ -130,6 +143,7 @@ class AppFixtures extends Fixture
             $page->translate('en')->setTitle($faker->sentence(4));
             $page->translate('en')->setSubtitle($faker->sentence(5));
             $page->translate('en')->setContent($faker->realText(200));
+            $page->translate('en')->setUpdated(true);
             $manager->persist($page);
             $page->mergeNewTranslations();
         }

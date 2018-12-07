@@ -4,10 +4,10 @@ namespace AppBundle\Service\Bridges;
 
 use AppBundle\Service\Interfaces\ExternalTranslatorInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Google\Cloud\Translate\TranslateClient;
 use ReflectionClass;
-use ReflectionException;
-use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 
 class GoogleTranslatorBridge implements ExternalTranslatorInterface
 {
@@ -24,96 +24,97 @@ class GoogleTranslatorBridge implements ExternalTranslatorInterface
     /**
      * @var int
      */
-    private $lengthByCallLimit;
+    private $characsNbByCallLimit;
 
-    /**
-     * @var int
-     */
-    private $lengthFor100SecondsLimit;
-
-    /**
-     * @var int
-     */
-    private $characsCounter;
-
-    public function __construct(
-        EntityManagerInterface $em,
-        string $googleTranslateKey,
-        int $googleTranslateLengthByCallLimit,
-        int $googleTranslateLengthFor100SecondsLimit
-    ) {
+    public function __construct(EntityManagerInterface $em, array $googleTranslate)
+    {
         $this->em = $em;
-        $this->translator = new TranslateClient(['key' => $googleTranslateKey]);
-        $this->lengthByCallLimit = $googleTranslateLengthByCallLimit;
-        $this->lengthFor100SecondsLimit = $googleTranslateLengthFor100SecondsLimit;
+        $this->translator = new TranslateClient(['key' => $googleTranslate['key']]);
+        $this->characsNbByCallLimit = $googleTranslate['characs_nb_by_call_limit'];
     }
 
-    /**
-     * @throws ReflectionException
-     */
-    public function translate(string $entity, string $fromLangCode, string $toLangCode, OutputInterface $output): void
+    public function translate(string $entity, string $fromLangCode, string $toLangCode, ConsoleLogger $logger): void
     {
-        $reflection = new ReflectionClass($entity.'Translation');
         $objects = $this->em->getRepository($entity)->findAll();
 
         foreach ($objects as $object) {
             if (true === $object->translate($fromLangCode)->getUpdated()) {
-                $getters = $this->findAllGetters($reflection, $object, $fromLangCode);
-                $setters = $this->setAllSetters($getters, $toLangCode, $output);
+                $getters = $this->findAllStringGetters($entity, $object, $fromLangCode);
+                $setters = $this->setAllSetters($getters, $toLangCode, $logger);
 
                 foreach ($setters as $key => $setter) {
-                    $object->translate($toLangCode)->{$key}($setter);
+                    $object->translate($toLangCode, false)->{$key}($setter);
                 }
 
-                $this->save($object);
+                $object->translate($fromLangCode)->setUpdated(false);
+                $object->translate($toLangCode, false)->setUpdated(true);
+                $object->mergeNewTranslations();
             }
         }
+
+        $this->em->flush();
     }
 
-    public function checkLimits(string $string, string $langCode, OutputInterface $output): string
+    public function checkLimits(string $string, string $langCode, ConsoleLogger $logger): string
     {
+        $strings = $this->cutString($string, $logger);
         $translatedString = '';
 
-        if (\strlen($string) >= $this->lengthByCallLimit) {
-            $strings = explode('.', $string);
-
-            foreach ($strings as $str) {
-                if (\strlen($str) >= $this->lengthByCallLimit) {
-                    $strings = explode(',', $str);
-
-                    foreach ($strings as $subString) {
-                        if (\strlen($subString) > $this->lengthByCallLimit) {
-                            $output->writeln('Sorry, your sentence is way too long, Please make it smaller than 2000 characters or add punctuation');
-                        } else {
-                            $this->checkForCharacsNumberLimit($subString);
-                            $translatedString .= $this->translator->translate($subString, ['target' => $langCode]).'.';
-                        }
-                    }
-                } else {
-                    $this->checkForCharacsNumberLimit($str);
-                    $translatedString .= $this->translator->translate($str, ['target' => $langCode]).'.';
-                }
+        try {
+            foreach ($strings as $string) {
+                $translatedString .= $this->htmlDecode($this->translator->translate($string, ['target' => $langCode])['text']);
             }
-        } else {
-            $this->checkForCharacsNumberLimit($string);
-            $translatedString = $this->translator->translate($string, ['target' => $langCode]).'.';
+        } catch (Exception $e) {
+            if (400 === $e->getCode()) {
+                $logger->info('Sorry, your sentence is way too long, the ninja can\t cut it by himself so please make it smaller than 2000 characters or add "." or "," punctuation');
+            }
+
+            if (403 === $e->getCode() && strpos($e->getMessage(), 'User Rate Limit Exceeded')) {
+                $logger->info('The ninja had to stop because of the 100 seconds limit! He is camping 100 seconds...');
+                sleep(102);
+            }
+
+            if (403 === $e->getCode() && strpos($e->getMessage(), 'Daily Limit Exceeded')) {
+                $logger->info('The ninja had to stop because of the day limit! He is camping until tomorrow...');
+                time_sleep_until(strtotime('tomorrow 00:10'));
+            }
         }
 
         return $translatedString;
     }
 
-    private function checkForCharacsNumberLimit(string $string)
+    private function cutString(string $string, ConsoleLogger $logger): array
     {
-        $this->characsCounter += \strlen($string);
+        $result = [];
 
-        if ($this->characsCounter >= $this->lengthFor100SecondsLimit) {
-            sleep(102);
-            $this->characsCounter = \strlen($string);
+        if (\strlen($string) >= $this->characsNbByCallLimit) {
+            $strings = explode('.', $string);
+
+            foreach ($strings as $str) {
+                if (\strlen($str) >= $this->characsNbByCallLimit) {
+                    $strings = explode(',', $str);
+
+                    foreach ($strings as $subString) {
+                        if (\strlen($subString) > $this->characsNbByCallLimit) {
+                            $logger->info('Sorry, your sentence is way too long, the ninja can\t cut it by himself so please make it smaller than 2000 characters or add "." or "," punctuation');
+                        } else {
+                            $result[] = $subString.',';
+                        }
+                    }
+                } else {
+                    $result[] = $str.'.';
+                }
+            }
+        } else {
+            $result[] = $string;
         }
+
+        return $result;
     }
 
-    private function findAllGetters(ReflectionClass $reflection, $object, string $fromLangCode)
+    private function findAllStringGetters(string $entity, $object, string $fromLangCode): array
     {
+        $reflection = new ReflectionClass($entity.'Translation');
         $getters = [];
 
         foreach ($reflection->getMethods() as $method) {
@@ -129,22 +130,20 @@ class GoogleTranslatorBridge implements ExternalTranslatorInterface
         return $getters;
     }
 
-    private function setAllSetters(array $getters, string $toLangCode, OutputInterface $output)
+    private function setAllSetters(array $getters, string $toLangCode, ConsoleLogger $logger): array
     {
         $setters = [];
 
         foreach ($getters as $key => $getter) {
             $key = substr_replace($key, 'set', 0, 3);
-            $setters[$key] = $this->checkLimits($getter, $toLangCode, $output);
+            $setters[$key] = $this->checkLimits($getter, $toLangCode, $logger);
         }
 
         return $setters;
     }
 
-    private function save($object)
+    private function htmlDecode(string $string): string
     {
-        $this->em->persist($object);
-        $object->mergeNewTranslations();
-        $this->em->flush();
+        return htmlspecialchars_decode(html_entity_decode($string, ENT_QUOTES));
     }
 }

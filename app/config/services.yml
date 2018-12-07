@@ -21,6 +21,4 @@ services:
         class: AppBundle\Service\Bridges\GoogleTranslatorBridge
         arguments:
             - "@doctrine.orm.entity_manager"
-            - "%google_translate_key%"
-            - "%google_translate_api_length_by_call_limit%"
-            - "%google_translate_api_length_for_100_seconds_limit%"
+            - "%google_translate%"
